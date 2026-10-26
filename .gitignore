@@ -1,0 +1,58 @@
+# Private material and credentials
+/private/
+/local/
+/hardware/original_robot/
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Operating-system and editor files
+.DS_Store
+Thumbs.db
+Desktop.ini
+~$*
+*.tmp
+*.bak
+*.swp
+.idea/
+
+# STM32 build output (retain source, startup, linker scripts and project files)
+**/Debug/
+**/Release/
+**/build/
+*.o
+*.d
+*.elf
+*.hex
+*.bin
+
+# Quartus-generated databases/output (retain .qpf, .qsf, .sdc and needed IP)
+**/db/
+**/incremental_db/
+**/output_files/
+*.qws
+*.sof
+*.pof
+*.jic
+
+# Generated simulator data (retain HDL and testbench source)
+**/work/
+*.vcd
+*.fst
+*.wlf
+transcript
+
+# Python cache
+__pycache__/
+.venv/
+
+
+# Original local intake materials: retained on disk, excluded from public history
+/EFES_Local_First_Setup.zip
+/EFES_Proposal_Parameters_and_Scope.docx
+/EFES_System_Block_Diagram.drawio
+/EFES_System_Block_Diagram.drawio.png
+/Individual_Project_*.pdf
