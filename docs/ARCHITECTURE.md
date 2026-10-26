@@ -1,51 +1,51 @@
-# 系统架构
+# System architecture
 
-本文件记录项目上下文及软硬件边界；软件目录与集成证据见 [软件架构](SOFTWARE_ARCHITECTURE.md)。来源与方案优先级见 [项目基线](PROJECT_BASELINE.md)。
+This document records the system context and hardware/software boundaries. Software structure and integration evidence are in the [software architecture](SOFTWARE_ARCHITECTURE.md). Source authority and proposal precedence are recorded in the [project baseline](PROJECT_BASELINE.md).
 
-## 检查范围与现状
+## Inspected scope and current state
 
-已读取启动包内清单、说明及硬件更新，根目录提案 DOCX / PDF 文本、drawio 标签，并检查实际文件元数据。未执行原始安装器或项目脚本；未检查外部旧机器人项目、实物电路或板卡。
+The inspection covered the starter manifest, notes, and hardware update; text from the original root-level proposal DOCX / PDF; drawio labels; and actual file metadata. The original installer and project scripts were not executed. The external earlier robot project, physical circuits, and boards were not inspected.
 
-初始化后工作树包括 `docs/`、`stm32/`、`fpga/{rtl,sim,quartus}/`、`hardware/`、`tests/`。软件与 FPGA 路径目前为说明或占位文件，没有实际可运行系统。根目录原始五个输入文件保留本地且不公开。
+The initialized working tree contains `docs/`, `stm32/`, `fpga/{rtl,sim,quartus}/`, `hardware/`, and `tests/`. Software and FPGA locations currently contain notes or placeholders, with no operational system. The five original root-level input files remain local and unpublished.
 
-## 材料描述的系统目标
+## System proposed by the supplied material
 
-下图是 v0.4 **拟建系统**，不是已实现或已验证的数据通路。
+The following is the **proposed v0.4 system**, not an implemented or verified signal path.
 
 ```mermaid
 flowchart LR
-    I[一路模拟输入] --> A[调理与抗混叠滤波]
-    A --> ADC[开发板上的 ADC]
-    ADC --> F[FPGA 采集与回放控制]
-    F <--> R[FPGA 内部 RAM]
-    F --> DAC[外接 DAC]
-    DAC --> O[重建滤波与模拟输出]
-    M[STM32G431 配置与控制] <-->|UART 暂定| F
+    I[Single analog input] --> A[Conditioning and anti-alias filter]
+    A --> ADC[ADC on development board]
+    ADC --> F[FPGA acquisition and playback control]
+    F <--> R[FPGA internal RAM]
+    F --> DAC[External DAC]
+    DAC --> O[Reconstruction filter and analog output]
+    M[STM32G431 configuration and control] <-->|Provisional UART| F
 ```
 
-| 子系统 | 材料中提出的职责 | 外部边界 | 状态与依据 |
+| Subsystem | Proposed responsibility | External boundary | Status and evidence |
 |---|---|---|---|
-| STM32 | 配置与控制、命令与状态交互 | 硬件 UART，实际引脚、电平、波特率与协议待定 | 暂定；`docs/hardware-update.md`、`stm32/README.md` |
-| FPGA 与存储 | ADC 时序、采集、地址 / 长度控制、RAM 访问和 DAC 回放 | 开发板时钟、转换器数字接口 | 仅规划；`fpga/` 为占位目录 |
-| 模拟信号链 | 输入调理、抗混叠和输出重建滤波 | 转换器参考、电压范围、带宽与负载 | 待设计；`docs/hardware-update.md` |
-| 电源 | 为外部模拟电路等提供经核对的电源轨，并测量性能 | 板卡规定输入、实际负载、电源地与回流 | 复用提议；最终分配与性能待确认 |
-| 验证 | 独立接口验证、存储读写、真实模拟录放及电源测量 | 仪器与原始测量记录 | 未执行；`tests/README.md` |
+| STM32 | Configuration, control, commands, and status exchange | Hardware UART; actual pins, levels, baud rate, and protocol remain undefined | Provisional; `docs/hardware-update.md`, `stm32/README.md` |
+| FPGA and storage | ADC timing, acquisition, address / length control, RAM access, and DAC playback | Development-board clock and converter digital interfaces | Planning only; `fpga/` contains placeholders |
+| Analog signal path | Input conditioning, anti-alias filtering, and output reconstruction filtering | Converter references, voltage ranges, bandwidth, and load | Design pending; `docs/hardware-update.md` |
+| Power | Supply verified rails to external analog circuits and other agreed loads, and measure performance | Specified board inputs, actual loads, grounds, and return paths | Reuse proposed; final allocation and performance need confirmation |
+| Verification | Independent interface checks, storage read/write checks, actual analog recording/playback, and power measurements | Instruments and raw measurement records | Not run; `tests/README.md` |
 
-转换器数据由 FPGA 处理，STM32 不承担连续样本流，这是启动材料中的职责划分。录制结束后，存储内容应独立于当前输入供 DAC 回放；此项为验证目标，尚无运行证据。
+The starter assigns converter data handling to the FPGA; the STM32 does not carry the continuous sample stream. After recording ends, stored contents should remain available for DAC playback independently of the current input. This is a verification target with no runtime evidence yet.
 
-## 物理接口与边界
+## Physical interfaces and boundaries
 
-- ADC 候选为 DE1-SoC 板载 LTC2308，不能描述为 FPGA 芯片内置 ADC。
-- DAC 优先借用，备选 Pmod DA2 / DAC121S101；实际接口时序和参考缩放未确认。
-- FPGA 与 STM32 开发板使用其规定的供电输入；既有电源输出是否、如何用于模拟部分仍待验证。
-- 原始框图中的未定选项与 v0.4 方案有差异，不可直接作为接线图。原理图、引脚分配、电平兼容和时序约束均尚缺。
+- The candidate ADC is the LTC2308 on the DE1-SoC board, not an ADC inside the FPGA device.
+- Prefer a loaned DAC; the backup is Pmod DA2 / DAC121S101. Actual interface timing and reference scaling remain unconfirmed.
+- FPGA and STM32 development boards use their specified supply inputs. Whether and how the existing power outputs serve the analog section remains to be verified.
+- Open options in the original block diagram differ from v0.4. It is not a verified wiring diagram. Schematics, pin assignments, voltage compatibility, and timing constraints are still missing.
 
-## 推荐的后续架构工作
+## Recommended architecture work
 
-以下是建议，未在初始化中实施：
+The following are proposals and were not implemented during initialization:
 
-1. 核对实际硬件与课程范围，固定跨板接口、供电及转换器边界。
-2. 沿用启动包的职责目录：`stm32/` 放独立 EFES 固件，`fpga/rtl/` 放 HDL，`fpga/sim/` 放测试台，`fpga/quartus/` 放工程与约束，`hardware/` 放新接线与电路资料。
-3. 先定义命令 / 状态接口与存储行为，再实施并验证各模块；依赖方向为 STM32 控制命令 → FPGA 控制逻辑 → 存储与转换器，不绕过已定义接口。
+1. Confirm actual hardware and course scope, then define inter-board interfaces, power boundaries, and converter boundaries.
+2. Keep the starter's responsibility-based locations: independent EFES firmware in `stm32/`, HDL in `fpga/rtl/`, testbenches in `fpga/sim/`, projects and constraints in `fpga/quartus/`, and new wiring/circuit records in `hardware/`.
+3. Define command/status interfaces and memory behavior before implementing and verifying modules. The proposed dependency direction is STM32 commands -> FPGA control -> storage and converters; use the defined interfaces.
 
-本次没有目录迁移或源码变更。共享框架未指定，兼容性 `Not assessed`。未决项：借用与课程认可、接口定义、实际供电、仪器条件及构建配置。
+Initialization did not migrate directories or modify source code. No shared architecture profile has been designated; compatibility is `Not assessed`. Open items include loans and course acceptance, interface definitions, actual supplies, instruments, and build configurations.

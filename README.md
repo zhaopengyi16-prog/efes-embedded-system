@@ -1,64 +1,66 @@
-# EFES 单通道信号采集与回放系统
+# EFES Single-Channel Signal Acquisition and Playback System
 
-Electronics for Embedded Systems 个人项目：采集一路模拟信号，将样本存入 FPGA 内部 RAM，再通过 DAC 回放已存储的波形。STM32 负责配置与控制，FPGA 负责采样、存储和回放时序。
+An Electronics for Embedded Systems individual project: acquire one analog signal, store the samples in FPGA internal RAM, and reproduce the stored waveform through a DAC. The STM32 provides configuration and control; the FPGA handles acquisition, storage, and playback timing.
 
-**当前阶段：项目初始化与方案准备。仓库尚无可编译的 STM32 固件、Verilog 实现或实测结果。**
+**Status: project initialization and planning. This repository does not yet contain buildable STM32 firmware, a Verilog implementation, or measured results.**
 
-## 范围与目标
+## Scope and targets
 
-- 单路模拟输入、单路模拟输出；录制与回放分阶段进行。
-- 初始设计目标为标称 12 位转换、100 kS/s；接口初测可先用 50 kS/s；信号带宽最高 2 kHz。
-- 缓冲区目标为 32 KiB，即 16,384 个 16 位样本；在 100 kS/s 下录制时长为 163.84 ms。
-- 输入调理、抗混叠滤波、输出重建滤波，以及既有自设计电源的性能验证属于项目范围。
-- 初始模拟范围暂定 0.3–2.7 V、输出负载至少 10 kΩ，须由实际器件和测试确认。
-- 连续流、多通道和专用 PC 图形界面不在初始范围内。
+- One analog input and one analog output, with separate recording and playback phases.
+- Initial targets: nominal 12-bit conversion, 100 kS/s, and a signal bandwidth up to 2 kHz. Initial interface tests may use 50 kS/s.
+- Target buffer: 32 KiB, holding 16,384 samples as 16-bit words. At 100 kS/s, this gives a recording length of 163.84 ms.
+- The scope includes input conditioning, anti-alias filtering, output reconstruction filtering, and performance verification of the existing self-designed power section.
+- The provisional analog range is 0.3-2.7 V, with an output load of at least 10 kohm. Actual components and measurements must confirm these limits.
+- Continuous streaming, multiple channels, and a dedicated PC graphical interface are outside the initial scope.
 
-以上数值是设计目标，尚未测量；不代表 12 位有效精度、已完成的时序收敛或已验证的电源效率。
+These values are design targets, not measurements. They do not establish 12-bit effective accuracy, achieved timing closure, or verified power efficiency.
 
-## 当前方案来源
+## Current planning sources
 
-本仓库沿用提供的 v0.4 启动包及 [硬件更新](docs/hardware-update.md) 作为暂定工作方案。旧提案提出 SPI 和新设计 DC-DC，v0.4 改为 UART 和复用既有电源；这些变更仍需确认。详细来源及权限状态见 [项目基线](docs/PROJECT_BASELINE.md)。
+The supplied v0.4 starter package and [hardware update](docs/hardware-update.md) form the provisional working proposal. The earlier proposal used SPI and a new DC-DC design; v0.4 proposes UART and reuse of the existing power section. These changes still require confirmation. Source identities and approval status are recorded in the [project baseline](docs/PROJECT_BASELINE.md).
 
-| 部分 | v0.4 暂定方案 | 状态 |
+| Subsystem | Provisional v0.4 selection | Status |
 |---|---|---|
-| 控制器 | 已有 STM32G431 开发板；硬件 UART | 板卡在原方案中记为已有；实际板号、引脚和时钟待核对 |
-| FPGA / ADC | 借用 Terasic DE1-SoC 和板载 LTC2308；使用一路 ADC | 借用待确认；ADC 位于开发板上 |
-| 采样存储 | FPGA 内部 RAM，自行编写控制逻辑 | 待实现；课程是否接受待确认 |
-| DAC | 优先借用合适模块；备选 Pmod DA2 / DAC121S101，A 通道 3.3 V | 型号、接口与可用性待确认 |
-| 模拟电路 | MCP6004-I/P 及无源器件 | 待设计和仿真 |
-| 电源 | 既有 12 V 输入、自设计的标称 3.3 / 5 / 7 V 电源部分 | 复用方案及输出性能待确认 |
+| Controller | Existing STM32G431 development board; hardware UART | Listed as owned in the supplied material; actual board revision, pins, and clocks need verification |
+| FPGA / ADC | Loaned Terasic DE1-SoC and onboard LTC2308; one ADC channel | Loan pending; the ADC is on the development board |
+| Sample memory | FPGA internal RAM with project-written control logic | Not implemented; course acceptance needs confirmation |
+| DAC | Prefer a suitable loan module; backup: Pmod DA2 / DAC121S101, channel A at 3.3 V | Model, interface, and availability need confirmation |
+| Analog circuits | MCP6004-I/P and passive components | Design and simulation pending |
+| Power | Existing self-designed 12 V input section with nominal 3.3 / 5 / 7 V rails | Reuse and output performance need confirmation |
 
-各开发板按其规定的电源输入供电；连接前核对实际版本、引脚、电平和供电，不并联稳压器输出。
+Power each development board through its specified input. Before making connections, verify actual revisions, pins, voltage levels, and supplies. Do not parallel regulator outputs.
 
-## 开始工作
+## Getting started
 
-1. 阅读 [项目基线](docs/PROJECT_BASELINE.md)、[系统架构](docs/ARCHITECTURE.md) 和 [软件架构](docs/SOFTWARE_ARCHITECTURE.md)。
-2. 确认 FPGA / DAC 借用、实验室条件、UART 替代 SPI、内部 RAM 方案，以及既有电源复用范围。
-3. 确认实际板卡与工具版本后，再创建 STM32 与 Quartus 工程并记录真实的构建方法。
+1. Read the [project baseline](docs/PROJECT_BASELINE.md), [system architecture](docs/ARCHITECTURE.md), and [software architecture](docs/SOFTWARE_ARCHITECTURE.md).
+2. Confirm FPGA / DAC loans, laboratory access, UART substitution for SPI, the internal RAM approach, and the permitted scope of power-section reuse.
+3. Confirm the actual boards and tool versions, then create the STM32 and Quartus projects and record their real build procedures.
 
-原材料提出 Quartus Prime（优先课程 18.1 环境）、Verilog、C/CMSIS、现有 G431 IDE 或 STM32CubeIDE，以及 LTspice。工具是否已安装、器件支持包、具体工程配置与构建命令均尚未验证。
+The supplied material proposes Quartus Prime, preferably the course's 18.1 setup; Verilog; C/CMSIS in the existing G431 IDE or STM32CubeIDE; and LTspice. Installed tools, device support packages, project configurations, and build commands have not been verified.
 
-**构建、仿真和硬件测试：未运行；当前没有可执行的工程或测试台。**
+**Builds, simulations, and hardware tests: not run. There is no executable project or testbench yet.**
 
-## 目录
+## Repository structure
 
 ```text
-docs/           基线、架构和 v0.4 硬件更新
-stm32/          STM32 固件位置及准备说明
-fpga/rtl/       Verilog 预留目录
-fpga/sim/       仿真测试台预留目录
-fpga/quartus/   Quartus 工程与引脚、时序约束预留目录
-hardware/       接线、模拟电路与器件记录位置
-tests/          验证记录位置
-AGENTS.md       后续开发的协作边界
+docs/           Baseline, architecture, and v0.4 hardware update
+stm32/          Firmware location and preparation notes
+fpga/rtl/       Reserved location for Verilog modules
+fpga/sim/       Reserved location for simulation testbenches
+fpga/quartus/   Reserved location for Quartus projects and pin/timing constraints
+hardware/       Wiring, analog circuits, and component records
+tests/          Verification records
+AGENTS.md       Guidance for future development
 ```
 
-## 验证方向
+## Verification approach
 
-先分别验证 RAM 已知数据读写、UART 命令响应和 ADC / DAC 接口，再集成录制与回放。演示需要停止采集、改变当前输入，并观察 DAC 实际模拟输出仍回放原存储波形。记录仪器、硬件版本、源码提交、测试条件和原始结果；电源纹波、稳压与效率保留为待测项目。
+Verify RAM read/write behavior with known data, UART command responses, and the ADC / DAC interfaces independently before integrating recording and playback. The demonstration must stop acquisition, change the present input, and observe the actual DAC analog output replaying the stored waveform. Record instruments, hardware revisions, source commits, conditions, and raw results. Power ripple, regulation, and efficiency remain unmeasured.
 
-## 公开仓库范围
+## Public repository boundary
 
-原始启动压缩包、旧提案和旧框图保留在本地并由 `.gitignore` 排除；包含学生编号的原始文件不上传。公开部分为经检查的启动目录、v0.4 硬件更新与初始化文档。不要上传课程讲义、教授邮件、账号凭据或完整旧机器人项目。未选择开源许可证；第三方材料加入时保留其许可声明。
+The original starter archive, earlier proposals, and earlier block diagrams remain local and are excluded by `.gitignore`. Original files containing student identifiers are not published. Public contents comprise the reviewed starter structure, v0.4 hardware update, and initialization documents. Do not upload course slides, professor emails, account credentials, or the complete earlier robot project. No open-source license has been selected; retain third-party notices when adding third-party material.
 
-下一步：确认来源与方案的权威性，再进入完整功能需求整理。
+All maintained repository content must be written in English.
+
+Next step: confirm source authority and the proposed scope, then prepare the complete functional requirements.

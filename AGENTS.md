@@ -1,44 +1,49 @@
-# 项目协作规则
+# Project guidance
 
-## 适用范围
+## Scope
 
-本文件适用于整个仓库。后续若存在更具体的子目录 `AGENTS.md`，在其范围内遵循更具体规则。
+These instructions apply to the entire repository. More specific nested `AGENTS.md` files, if added later, apply within their subtrees.
 
-## 修改前阅读
+## Repository language
+
+- Write all maintained repository content in English, including documentation, diagrams, code comments, and commit messages.
+- Keep future repository updates in English. Do not introduce Chinese text into tracked files.
+
+## Read before changing
 
 - `README.md`
 - `docs/PROJECT_BASELINE.md`
 - `docs/ARCHITECTURE.md`
 - `docs/SOFTWARE_ARCHITECTURE.md`
-- 与当前任务有关的 `docs/hardware-update.md` 及目录说明
+- Task-relevant sections of `docs/hardware-update.md` and directory notes
 
-## 工作边界
+## Working boundaries
 
-- 仅完成用户授权的任务；初始化完成不代表已授权实现全部功能。
-- 当前是方案与目录骨架，没有实际固件、HDL、构建工程或测试台；不得虚构可运行状态。
-- UART 替代 SPI、内部 RAM、既有电源复用、板卡与器件选择仍为暂定方案；实施前核对任务所需的确认结果。
-- 不凭目录名、函数定义或编译纳入情况推断运行连接；分别记录源码存在、构建纳入、运行连接和上板验证。
-- 不移动、删除或覆盖原始项目材料，不自动导入整个旧机器人项目。
-- 保护后续出现的第三方、生成文件、构建输出和 IDE 缓存；保留必要的工程、启动、链接、引脚及时序约束文件。
-- 不混入无关清理，不整体改写构建系统。修改源码前阅读相邻的维护文件，延续当地风格；当前没有可推导全局编码风格的源码。
-- 确认事实、推断、设计目标和待确认事项须分开描述。
+- Complete only the user-authorized task. Initialization does not authorize implementation of every feature.
+- The repository currently contains planning material and a directory scaffold, with no firmware, HDL, configured build, or testbench. Do not claim it is operational.
+- UART substitution for SPI, internal RAM, power-section reuse, and board/component selections remain provisional. Check the confirmations needed for the task before implementation.
+- Do not infer runtime connection from directory names, function definitions, or build inclusion. Record source presence, build inclusion, runtime connection, and on-target verification separately.
+- Do not move, delete, or overwrite original project materials, or automatically import the complete earlier robot project.
+- Protect future third-party files, generated files, build outputs, and IDE caches. Retain required project, startup, linker, pin, and timing-constraint files.
+- Avoid unrelated cleanup or build-system replacement. Read nearby maintained source files before editing and follow their local style. There is currently no source from which to infer a global coding style.
+- Distinguish confirmed facts, inferences, design targets, and unresolved decisions.
 
-## Git 与公开发布
+## Git and public releases
 
-- 修改前后检查状态与实际差异，保留用户已有改动。
-- 后续提交、推送、标签或远程变更须由用户任务授权，不擅自丢弃改动或强制推送。
-- 原始提案、启动 ZIP、旧框图及本地材料按 `.gitignore` 保留在本机；不得使用强制添加绕过排除规则。
-- 不发布学生编号、私人联系方式、凭据、邮件、课程讲义或未经审核的旧项目内容。
-- 未选择开源许可证，不自行替用户授予许可。
+- Inspect status and actual differences before and after a change. Preserve existing user changes.
+- Subsequent commits, pushes, tags, and remote changes require authorization from the user's task. Do not discard changes or force-push without authorization.
+- Keep original proposals, the starter ZIP, earlier diagrams, and local materials on the local machine according to `.gitignore`. Do not bypass exclusions with forced staging.
+- Do not publish student identifiers, private contact information, credentials, emails, course slides, or unreviewed material from earlier projects.
+- No open-source license has been selected. Do not grant a license on the user's behalf.
 
-## 构建与验证
+## Build and verification
 
-- STM32 构建：TODO，尚未创建工程，未运行。
-- FPGA 构建与仿真：TODO，尚无 Quartus 工程、HDL 与测试台，未运行。
-- 硬件验证：TODO，板卡借用、引脚、电平、时钟与供电确认后执行。
-- 录制回放验证应观察真实 DAC 模拟输出；离线样本绘图不能替代该验证。
-- 每次只运行与变更相关、实际存在的检查；报告准确区分“未运行”“仿真通过”和“硬件通过”。
+- STM32 build: TODO; no project has been created; not run.
+- FPGA build and simulation: TODO; no Quartus project, HDL, or testbench exists; not run.
+- Hardware verification: TODO; first confirm loans, pins, voltage levels, clocks, and supplies.
+- Record/playback verification must observe the actual DAC analog output. Offline sample plots do not replace that check.
+- Run only existing checks relevant to the change. Accurately distinguish "not run", "simulation passed", and "hardware passed".
 
-## 完成条件
+## Completion criteria
 
-用户请求范围完成；相关检查已执行或说明未运行原因；报告实际修改文件及未解决项。只有已记录事实发生变化时才同步基线或架构文档。
+Complete the requested scope, run relevant checks or explain why they were not run, and report actual changed files and unresolved items. Update the baseline or architecture documents only when the facts they record change.
