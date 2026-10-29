@@ -17,6 +17,7 @@ Desktop.ini
 *.tmp
 *.bak
 *.swp
+*.uvguix.*
 .idea/
 
 # STM32 build output (retain source, startup, linker scripts and project files)
@@ -25,6 +26,7 @@ Desktop.ini
 **/build/
 *.o
 *.d
+*.map
 *.elf
 *.hex
 *.bin
@@ -34,6 +36,7 @@ Desktop.ini
 **/incremental_db/
 **/output_files/
 *.qws
+/fpga/quartus/c5_pin_model_dump.txt
 *.sof
 *.pof
 *.jic

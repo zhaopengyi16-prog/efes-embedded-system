@@ -1,0 +1,27 @@
+{
+  "configurations": [
+    {
+      "name": "STM32G431-ArmClang",
+      "compilerPath": "D:/Keil_v5/ARM/ARMCLANG/bin/armclang.exe",
+      "compilerArgs": [
+        "--target=arm-arm-none-eabi",
+        "-mcpu=cortex-m4",
+        "-mfpu=fpv4-sp-d16",
+        "-mfloat-abi=hard"
+      ],
+      "intelliSenseMode": "windows-clang-arm",
+      "includePath": [
+        "${workspaceFolder}/stm32/Control16-10-2026/APP",
+        "${workspaceFolder}/stm32/Control16-10-2026/BSP",
+        "${workspaceFolder}/stm32/Control16-10-2026/CMSIS/Core/Include",
+        "${workspaceFolder}/stm32/Control16-10-2026/CMSIS/Dvice/Include"
+      ],
+      "defines": [
+        "STM32G431xx"
+      ],
+      "cStandard": "c11",
+      "cppStandard": "c++17"
+    }
+  ],
+  "version": 4
+}

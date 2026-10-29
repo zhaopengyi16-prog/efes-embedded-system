@@ -1,6 +1,6 @@
 # Project baseline
 
-Reviewed: 2026-10-27. Mode: initialization from existing multidisciplinary project materials. Baseline status: **Provisional**.
+Reviewed: 2026-10-29 (STM32 UART bring-up implementation and initial FPGA project updates). Mode: development from existing multidisciplinary project materials. Baseline status: **Provisional**.
 
 ## Project identity and scope
 
@@ -14,7 +14,7 @@ Reviewed: 2026-10-27. Mode: initialization from existing multidisciplinary proje
 
 | Input | Source | Version and applicability | Authority and approval | Evidence status |
 |---|---|---|---|---|
-| Software project | Local `EFES_Local_First_Setup.zip`, under `EFES_Project_Starter/project/`; working-tree paths `stm32/` and `fpga/` | Starter v0.4; no `.ioc`, `.qpf`, build entry, firmware, or HDL | Initialization material in the user-designated directory; not yet a configured software project | Found—authority unknown; software project Missing |
+| Software project | Starter v0.4, author-created STM32 project, and explicit requests for initial projects, VS Code integration, and complete register-level UART bring-up | STM32G431RBT6 CMSIS GPIO / USART2 polling drivers and APP echo, plus DE1-SoC LED/reset HDL, constraints, and testbench | Project setup and PC UART bring-up are user-authorized; broader functional and inter-board decisions remain provisional | Both configured builds, local UART register-mock checks, and FPGA starter simulation verified; on-target execution Missing |
 | Hardware and interfaces | `docs/hardware-update.md`, `docs/EFES_Hardware_Update_v0.4.docx`, and `docs/EFES_Hardware_Update_v0.4.pdf` | 2026-10-26; STM32G431, DE1-SoC / LTC2308, candidate DAC, and analog circuits | Provisional proposal; loans, pins, voltage levels, schematics, and power reuse are unapproved or unverified | Found—authority unknown; final interface definition Missing |
 | Functional requirements | Original proposal DOCX / PDF in the root directory, local only; supplemented by the public v0.4 hardware update | Single-channel recording and playback; no explicit original proposal version found; converter resolution and control-link proposals differ | No course confirmation or complete requirements baseline supplied | Found—authority unknown; precedence Needs confirmation |
 
@@ -36,19 +36,22 @@ No external authoritative system or course approval record has been provided. No
 ## Configuration and initialization boundaries
 
 - Planned tools from the starter: Quartus Prime, preferably the course's 18.1 setup; Verilog; the existing G431 IDE or STM32CubeIDE; C/CMSIS; and LTspice.
-- Local installations, exact versions, target devices, clocks, pins, build configurations, and test commands: TODO.
+- Confirmed target: STM32G431RBT6 (author-provided), selected as `STM32G431RBTx`. The firmware retains SYSCLK / PLL selection and explicitly selects nominal HSI16 / 16 MHz for USART2. PA2 TX / PA3 RX, AF7, default 115200 / 8N1 are configured for PC bring-up; physical board routing, debug probe, and COM bridge operation remain unverified.
+- Verified local STM32 tools: Keil MDK 5.43a / Arm Compiler 6.24 at `D:\Keil_v5`, MDK Community activated for non-commercial use, and `Keil.STM32G4xx_DFP.1.6.0`. Copied core headers originate from Arm CMSIS 6.2.0. Build entry: `stm32/build.ps1`, also invoked by the VS Code build task; see `stm32/README.md`.
+- Verified local FPGA tools: Quartus Prime Lite 18.1.0 Build 625 with Cyclone V support and ModelSim - Intel FPGA Starter Edition 10.5b at `D:\intelFPGA_lite\18.1`. Build entry: `fpga/build.ps1`; simulation uses `-Simulate`. The DE1-SoC software target, 50 MHz clock, KEY0 reset, and LEDR0 constraints follow the proposed board and the Terasic manual linked in `fpga/README.md`. The actual loaned board/revision remains unverified.
 - Git setup: `main` branch, initialization commit, and connection to the public repository above. Commit identity uses the account-associated noreply email address.
 - The five original input files remain in their original locations and are not rearranged or rewritten. They are outside the public repository contents.
 - All 12 archived project files passed the package manifest's SHA-256 checks. Initialization adjusted the root README and ignore rules and added project guidance; other starter files retained their original bytes.
-- Builds, simulations, on-target tests, and analog / power measurements: not run.
-- Maintained repository content is required to be in English.
+- On 2026-10-29, initial STM32 compilation/linking/AXF/HEX generation and FPGA synthesis/fitting/assembly/SOF generation/50 MHz timing analysis passed. FPGA starter behavioral simulation passed. The Quartus build retains Lite Edition notice 292013; on-target execution, full application verification, and analog/power measurements have not been run.
+- UART implementation on 2026-10-29 passed a full Keil rebuild with zero errors / warnings and local register-mock checks for configuration, data values, timeout paths, and receive-error discard commands. APP calls initialization and implements startup output / echo; no on-target UART or FPGA command exchange has been tested.
+- Maintained repository content remains in English except for Chinese explanatory comments explicitly requested by the author in the APP / BSP UART bring-up sources; see `AGENTS.md` for the bounded exception.
 
 ## Open decisions
 
 1. The project author must confirm the course-approved functional sources and the applicability of SPI-to-UART substitution, power reuse, and internal RAM.
 2. Confirm FPGA / DAC loans, laboratory access, actual board revisions, and instruments.
 3. Confirm voltage range, output load, supply boundaries, reference voltages, timing, and UART command format.
-4. After creating real projects, record build targets, tool versions, and reproducible commands before completing the requirements baseline.
+4. Initial STM32 and FPGA targets, tool versions, and reproducible build/simulation commands are recorded. Functional requirements, actual loaned board revision, application interfaces, and physical integration remain pending.
 
 ## Update triggers
 
