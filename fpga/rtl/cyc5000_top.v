@@ -40,7 +40,28 @@ module cyc5000_top #(
             blink_cnt <= blink_cnt + 24'd1;
         end
     end
-
-    assign LED = {6'b000000, btn_sync[1], blink};
+    wire tick;
+      sample_tick #(.DIVIDE(120)) u_tick (
+       .clk (CLK12M),
+         .rst (rst),
+          .tick(tick)
+      );
+    reg [16:0] tick_cnt = 17'd0;
+    reg        slow_led  = 1'b0;
+    always @(posedge CLK12M) begin
+        if (rst) begin
+            tick_cnt <= 17'd0;
+            slow_led  <= 1'b0;
+        end else if (tick) begin
+            if (tick_cnt == 17'd99999) begin
+                tick_cnt <= 17'd0;
+                slow_led  <= ~slow_led;
+            end else begin
+                tick_cnt <= tick_cnt + 17'd1;
+            end
+        end
+    end
+        assign LED = {5'b00000, slow_led, btn_sync[1], blink};
+   
 
 endmodule
