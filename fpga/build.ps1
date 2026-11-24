@@ -1,5 +1,8 @@
 param(
     [switch]$Simulate,
+    [switch]$Program,
+    [ValidateSet('DE1SoC', 'CYC5000')]
+    [string]$Board = 'DE1SoC',
     [string]$QuartusRoot = $env:QUARTUS_ROOTDIR,
     [string]$ModelSimRoot = $env:MODELSIM_ROOT
 )
@@ -25,11 +28,28 @@ if ($Simulate) {
     Write-Host 'Simulating the FPGA starter with ModelSim.'
 }
 else {
-    $tool = Join-Path $QuartusRoot 'bin64\quartus_sh.exe'
-    $workingDirectory = Join-Path $PSScriptRoot 'quartus'
-    $arguments = @('--flow', 'compile', 'efes_fpga')
-    $logName = 'quartus'
-    Write-Host 'Compiling the DE1-SoC FPGA starter with Quartus.'
+    if ($Board -eq 'CYC5000') {
+        $projectDirectory = 'quartus_cyc5000'
+        $projectName = 'efes_cyc5000'
+    }
+    else {
+        $projectDirectory = 'quartus'
+        $projectName = 'efes_fpga'
+    }
+    $workingDirectory = Join-Path $PSScriptRoot $projectDirectory
+    if ($Program) {
+        # Program the first JTAG cable; the CYC5000 chain has one device.
+        $tool = Join-Path $QuartusRoot 'bin64\quartus_pgm.exe'
+        $arguments = @('-c', '1', '-m', 'JTAG', '-o', ('"p;output_files\{0}.sof"' -f $projectName))
+        $logName = 'program'
+        Write-Host "Programming $Board with $projectName.sof."
+    }
+    else {
+        $tool = Join-Path $QuartusRoot 'bin64\quartus_sh.exe'
+        $arguments = @('--flow', 'compile', $projectName)
+        $logName = 'quartus'
+        Write-Host "Compiling the $Board FPGA project with Quartus."
+    }
 }
 
 if (-not (Test-Path -LiteralPath $tool -PathType Leaf)) {
@@ -58,8 +78,11 @@ if ($Simulate) {
     }
     Write-Host "Simulation passed. Waveform: $workingDirectory\efes_top_tb.vcd"
 }
+elseif ($Program) {
+    Write-Host 'Programming complete.'
+}
 else {
-    $programmingFile = Join-Path $workingDirectory 'output_files\efes_fpga.sof'
+    $programmingFile = Join-Path $workingDirectory ('output_files\{0}.sof' -f $projectName)
     if (-not (Test-Path -LiteralPath $programmingFile -PathType Leaf)) {
         throw 'Quartus exited successfully, but the SOF programming file was not produced.'
     }
