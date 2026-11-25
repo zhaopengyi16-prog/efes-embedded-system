@@ -8,6 +8,14 @@ module cyc5000_top #(
 ) (
     input  wire       CLK12M,
     input  wire       USER_BTN,
+    input  wire       UART_RX,    // from the on-board FTDI channel B (PC COM port)
+    output wire       UART_TX,    // to the on-board FTDI channel B
+    output wire       DAC_CS_N,   // MCP4921 pin 2  (header D2)
+    output wire       DAC_SCK,    // MCP4921 pin 3  (header D3)
+    output wire       DAC_SDI,    // MCP4921 pin 4  (header D4)
+    output wire       ADC_CS_N,   // ADC121S021 pin 6 (header D7)
+    output wire       ADC_SCLK,   // ADC121S021 pin 4 (header D8)
+    input  wire       ADC_SDATA,  // ADC121S021 pin 5 (header D9)
     output wire [7:0] LED
 );
 
@@ -61,7 +69,66 @@ module cyc5000_top #(
             end
         end
     end
-        assign LED = {5'b00000, slow_led, btn_sync[1], blink};
-   
+
+    // ---------- UART to the PC through the on-board COM port, 115200 8N1 ----------
+    wire [7:0] rx_data;
+    wire       rx_valid;
+    wire       tx_busy;
+    uart_rx #(.CLKS_PER_BIT(CLK_HZ / 115200)) u_rx (
+        .clk(CLK12M), .rst(rst), .rx(UART_RX), .data(rx_data), .valid(rx_valid)
+    );
+    wire [7:0] tx_data;
+    wire       tx_start;
+    uart_tx #(.CLKS_PER_BIT(CLK_HZ / 115200)) u_tx (
+        .clk(CLK12M), .rst(rst), .start(tx_start), .data(tx_data),
+        .tx(UART_TX), .busy(tx_busy)
+    );
+
+    // ---------- DAC test: 1 kHz sine from a 20-entry table at 20 kS/s ----------
+    wire dac_tick;
+    sample_tick #(.DIVIDE(CLK_HZ / 20000)) u_dac_tick (   // 12 MHz / 600 = 20 kHz
+        .clk(CLK12M), .rst(rst), .tick(dac_tick)
+    );
+
+    reg [4:0] sine_idx = 5'd0;
+    always @(posedge CLK12M) begin
+        if (rst)
+            sine_idx <= 5'd0;
+        else if (dac_tick)
+            sine_idx <= (sine_idx == 5'd19) ? 5'd0 : sine_idx + 5'd1;
+    end
+
+    wire [11:0] sine_value;
+    sine_lut u_sine (.index(sine_idx), .sine_value(sine_value));
+
+    wire dac_busy;
+    mcp4921_dac u_dac (
+        .clk(CLK12M), .rst(rst), .start(dac_tick), .value(sine_value),
+        .cs_n(DAC_CS_N), .sck(DAC_SCK), .sdi(DAC_SDI), .busy(dac_busy)
+    );
+
+    // ---------- ADC: one conversion on every 20 kHz tick ----------
+    wire [11:0] adc_sample;
+    wire        adc_valid;
+    wire        adc_busy;
+    pmod_ad1_reader #(.SCLK_HALF_CYCLES(2)) u_adc (   // SCLK = 12 MHz / 4 = 3 MHz
+        .clk(CLK12M), .rst(rst), .start(dac_tick), .sdata(ADC_SDATA),
+        .cs_n(ADC_CS_N), .sclk(ADC_SCLK),
+        .sample(adc_sample), .sample_valid(adc_valid), .busy(adc_busy)
+    );
+
+    // ---------- capture 1024 ADC samples on 'c' and send them to the PC ----------
+    wire capturing;
+    capture_dump u_scope (
+        .clk(CLK12M), .rst(rst),
+        .sample(adc_sample), .sample_valid(adc_valid),
+        .rx_data(rx_data), .rx_valid(rx_valid),
+        .tx_data(tx_data), .tx_start(tx_start), .tx_busy(tx_busy),
+        .capturing(capturing)
+    );
+
+    // LED7..LED3 show the top 5 bits of the ADC reading (a quick level check).
+    assign LED = {adc_sample[11:7], slow_led, btn_sync[1], blink};
+
 
 endmodule
