@@ -13,6 +13,7 @@ set_global_assignment -name VERILOG_FILE ../rtl/mcp4921_dac.v
 set_global_assignment -name VERILOG_FILE ../rtl/sine_lut.v
 set_global_assignment -name VERILOG_FILE ../rtl/pmod_ad1_reader.v
 set_global_assignment -name VERILOG_FILE ../rtl/capture_dump.v
+set_global_assignment -name VERILOG_FILE ../rtl/recorder.v
 set_global_assignment -name SDC_FILE efes_cyc5000.sdc
 set_global_assignment -name RESERVE_ALL_UNUSED_PINS_WEAK_PULLUP "AS INPUT TRI-STATED"
 

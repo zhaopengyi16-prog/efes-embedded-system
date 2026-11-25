@@ -1,7 +1,9 @@
 """Poor man's oscilloscope for the EFES FPGA.
 
 Sends 'c' to the FPGA, receives 1024 ADC samples (20 kS/s, 12 bit) and plots them.
-Usage:  python tools/adc_scope.py COM8
+Usage:  python tools/adc_scope.py COM8 [CMDS]
+        CMDS = letters sent to the FPGA before the capture, e.g.
+        g = test sine on, r = record, p = play, s = stop   (example: ... COM8 p)
 Needs:  pip install pyserial matplotlib
 """
 import sys
@@ -15,6 +17,10 @@ VREF = 3.3
 
 with serial.Serial(PORT, 115200, timeout=3) as ser:
     ser.reset_input_buffer()
+    cmds = sys.argv[2] if len(sys.argv) > 2 else ""
+    for ch in cmds:
+        ser.write(ch.encode("ascii"))
+        print(f"sent '{ch}'")
     ser.write(b"c")
     codes = []
     while len(codes) < N:

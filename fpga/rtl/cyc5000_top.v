@@ -101,9 +101,10 @@ module cyc5000_top #(
     wire [11:0] sine_value;
     sine_lut u_sine (.index(sine_idx), .sine_value(sine_value));
 
+    wire [11:0] dac_value;                 // chosen by the recorder (play / sine / silence)
     wire dac_busy;
     mcp4921_dac u_dac (
-        .clk(CLK12M), .rst(rst), .start(dac_tick), .value(sine_value),
+        .clk(CLK12M), .rst(rst), .start(dac_tick), .value(dac_value),
         .cs_n(DAC_CS_N), .sck(DAC_SCK), .sdi(DAC_SDI), .busy(dac_busy)
     );
 
@@ -127,8 +128,22 @@ module cyc5000_top #(
         .capturing(capturing)
     );
 
-    // LED7..LED3 show the top 5 bits of the ADC reading (a quick level check).
-    assign LED = {adc_sample[11:7], slow_led, btn_sync[1], blink};
+    // ---------- record / playback ----------
+    wire       recording, playing, gen_on;
+    wire [3:0] progress;
+    recorder u_rec (
+        .clk(CLK12M), .rst(rst), .tick(dac_tick),
+        .adc_sample(adc_sample), .adc_valid(adc_valid),
+        .sine_value(sine_value),
+        .rx_data(rx_data), .rx_valid(rx_valid),
+        .dac_value(dac_value),
+        .recording(recording), .playing(playing), .gen_on(gen_on),
+        .progress(progress)
+    );
+
+    // LED7 = recording, LED6 = playing, LED5 = test sine on,
+    // LED4..LED1 = record/playback position, LED0 = 1 Hz heartbeat.
+    assign LED = {recording, playing, gen_on, progress, blink};
 
 
 endmodule
