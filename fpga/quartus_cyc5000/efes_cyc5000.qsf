@@ -14,6 +14,8 @@ set_global_assignment -name VERILOG_FILE ../rtl/sine_lut.v
 set_global_assignment -name VERILOG_FILE ../rtl/pmod_ad1_reader.v
 set_global_assignment -name VERILOG_FILE ../rtl/capture_dump.v
 set_global_assignment -name VERILOG_FILE ../rtl/recorder.v
+set_global_assignment -name VERILOG_FILE ../rtl/sram_23lc1024.v
+set_global_assignment -name VERILOG_FILE ../rtl/recorder_sram.v
 set_global_assignment -name SDC_FILE efes_cyc5000.sdc
 set_global_assignment -name RESERVE_ALL_UNUSED_PINS_WEAK_PULLUP "AS INPUT TRI-STATED"
 
@@ -29,6 +31,11 @@ set_location_assignment PIN_D18 -to DAC_SDI
 set_location_assignment PIN_E1 -to ADC_CS_N
 set_location_assignment PIN_F1 -to ADC_SCLK
 set_location_assignment PIN_J1 -to ADC_SDATA
+set_location_assignment PIN_N18 -to SRAM_CS_N
+set_location_assignment PIN_M18 -to SRAM_SCK
+set_location_assignment PIN_C18 -to SRAM_SI
+set_location_assignment PIN_D1 -to SRAM_SO
+set_location_assignment PIN_L2 -to STM_RX
 set_location_assignment PIN_P4 -to LED[0]
 set_location_assignment PIN_M4 -to LED[1]
 set_location_assignment PIN_M3 -to LED[2]
@@ -55,3 +62,8 @@ set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to SRAM_CS_N
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to SRAM_SCK
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to SRAM_SI
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to SRAM_SO
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to STM_RX

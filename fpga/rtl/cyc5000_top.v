@@ -16,6 +16,11 @@ module cyc5000_top #(
     output wire       ADC_CS_N,   // ADC121S021 pin 6 (header D7)
     output wire       ADC_SCLK,   // ADC121S021 pin 4 (header D8)
     input  wire       ADC_SDATA,  // ADC121S021 pin 5 (header D9)
+    output wire       SRAM_CS_N,  // 23LC1024 pin 1 (header D0)
+    output wire       SRAM_SCK,   // 23LC1024 pin 6 (header D1)
+    output wire       SRAM_SI,    // 23LC1024 pin 5 (header D5)
+    input  wire       SRAM_SO,    // 23LC1024 pin 2 (header D6)
+    input  wire       STM_RX,     // commands from the STM32 USART1 TX, PC4 / J4-2 (header D10)
     output wire [7:0] LED
 );
 
@@ -77,6 +82,16 @@ module cyc5000_top #(
     uart_rx #(.CLKS_PER_BIT(CLK_HZ / 115200)) u_rx (
         .clk(CLK12M), .rst(rst), .rx(UART_RX), .data(rx_data), .valid(rx_valid)
     );
+    // Second UART receiver: single-letter commands from the STM32 board.
+    wire [7:0] rx2_data;
+    wire       rx2_valid;
+    uart_rx #(.CLKS_PER_BIT(CLK_HZ / 115200)) u_rx_stm (
+        .clk(CLK12M), .rst(rst), .rx(STM_RX), .data(rx2_data), .valid(rx2_valid)
+    );
+    // Commands from the PC and from the STM32 both go to the recorder.
+    wire [7:0] cmd_data  = rx_valid ? rx_data : rx2_data;
+    wire       cmd_valid = rx_valid | rx2_valid;
+
     wire [7:0] tx_data;
     wire       tx_start;
     uart_tx #(.CLKS_PER_BIT(CLK_HZ / 115200)) u_tx (
@@ -120,30 +135,39 @@ module cyc5000_top #(
 
     // ---------- capture 1024 ADC samples on 'c' and send them to the PC ----------
     wire capturing;
+    // During the SRAM self-test ('t') the capture takes the words read back
+    // from the SRAM instead of the ADC (low 12 bits), for debugging.
+    wire        dbg_mode, dbg_valid;
+    wire [15:0] dbg_data;
+    wire [11:0] cap_sample = dbg_mode ? dbg_data[11:0] : adc_sample;
+    wire        cap_valid  = dbg_mode ? dbg_valid      : adc_valid;
     capture_dump u_scope (
         .clk(CLK12M), .rst(rst),
-        .sample(adc_sample), .sample_valid(adc_valid),
+        .sample(cap_sample), .sample_valid(cap_valid),
         .rx_data(rx_data), .rx_valid(rx_valid),
         .tx_data(tx_data), .tx_start(tx_start), .tx_busy(tx_busy),
         .capturing(capturing)
     );
 
-    // ---------- record / playback ----------
-    wire       recording, playing, gen_on;
+    // ---------- record / playback with the external 23LC1024 SPI SRAM ----------
+    wire       recording, playing, gen_on, test_pass, test_fail;
     wire [3:0] progress;
-    recorder u_rec (
+    recorder_sram u_rec (
         .clk(CLK12M), .rst(rst), .tick(dac_tick),
         .adc_sample(adc_sample), .adc_valid(adc_valid),
         .sine_value(sine_value),
-        .rx_data(rx_data), .rx_valid(rx_valid),
+        .rx_data(cmd_data), .rx_valid(cmd_valid),
         .dac_value(dac_value),
         .recording(recording), .playing(playing), .gen_on(gen_on),
-        .progress(progress)
+        .test_pass(test_pass), .test_fail(test_fail),
+        .progress(progress),
+        .dbg_mode(dbg_mode), .dbg_data(dbg_data), .dbg_valid(dbg_valid),
+        .sram_cs_n(SRAM_CS_N), .sram_sck(SRAM_SCK), .sram_si(SRAM_SI), .sram_so(SRAM_SO)
     );
 
     // LED7 = recording, LED6 = playing, LED5 = test sine on,
-    // LED4..LED1 = record/playback position, LED0 = 1 Hz heartbeat.
-    assign LED = {recording, playing, gen_on, progress, blink};
-
+    // LED4 = SRAM self-test passed, LED3 = SRAM self-test failed,
+    // LED2..LED1 = record/playback position, LED0 = 1 Hz heartbeat.
+    assign LED = {recording, playing, gen_on, test_pass, test_fail, progress[3:2], blink};
 
 endmodule

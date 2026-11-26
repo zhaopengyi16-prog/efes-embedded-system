@@ -1,7 +1,7 @@
 /**
   ******************************************************************************
   * @file           : uart.c
-  * @brief          : STM32G431 USART2 寄存器驱动，提供轮询收发。
+  * @brief          : STM32G431 USART1 寄存器驱动，提供轮询收发。
   ******************************************************************************
   */
 
@@ -11,14 +11,14 @@
 #include <stddef.h>
 
 /* 内部参数 ------------------------------------------------------------------*/
-/* 查 DS12589 的 Alternate function mapping 表：PA2 / PA3 的 AF7 是 USART2。
- * 这是芯片支持的映射，接线前仍需确认开发板实际引出及占用情况。
+/* 查 DS12589 的 Alternate function mapping 表：PC4 / PC5 的 AF7 是 USART1。
+ * 驱动板原理图：PC4 接 J4-2，PC5 接 J4-1；该接头原标注为 IICB。
  */
-#define BSP_UART_INSTANCE             USART2
-#define BSP_UART_TX_PORT              GPIOA
-#define BSP_UART_TX_PIN               2U
-#define BSP_UART_RX_PORT              GPIOA
-#define BSP_UART_RX_PIN               3U
+#define BSP_UART_INSTANCE             USART1
+#define BSP_UART_TX_PORT              GPIOC
+#define BSP_UART_TX_PIN               4U
+#define BSP_UART_RX_PORT              GPIOC
+#define BSP_UART_RX_PIN               5U
 #define BSP_UART_GPIO_AF              7U
 
 /* 下方初始化会显式选择 HSI16；UART 时钟不依赖 CPU 的 PLL 配置。 */
@@ -58,7 +58,7 @@ static uint8_t BSP_UART_Wait_Flag(volatile uint32_t *p_Register, uint32_t Flags)
 
 /* 对外接口 ------------------------------------------------------------------*/
 /**
- * @brief 配置 USART2 及 PA2 / PA3，使用 8N1、16 倍过采样、轮询收发。
+ * @brief 配置 USART1 及 PC4 / PC5，使用 8N1、16 倍过采样、轮询收发。
  * @param BaudRate 波特率，首次测试使用 BSP_UART_DEFAULT_BAUDRATE。
  * @return 1：初始化成功；0：参数错误、GPIO 配置失败或硬件等待超时。
  * @note 查 RM0440：RCC 时钟选择及 USART 的初始化、BRR、CR1/2/3、ISR。
@@ -97,9 +97,9 @@ uint8_t BSP_UART_Init(uint32_t BaudRate)
         return 0U;
     }
 
-    /* 1. 开启 USART2 的 APB1 总线时钟，再读回确认访问顺序。 */
-    RCC->APB1ENR1 |= RCC_APB1ENR1_USART2EN;
-    ReadBack = RCC->APB1ENR1;
+    /* 1. 开启 USART1 的 APB2 总线时钟，再读回确认访问顺序。 */
+    RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
+    ReadBack = RCC->APB2ENR;
     (void)ReadBack;
 
     /* 2. 关闭串口后开启 HSI16，等待振荡器就绪。
@@ -112,13 +112,13 @@ uint8_t BSP_UART_Init(uint32_t BaudRate)
         return 0U;
     }
 
-    /* 3. 只复位 USART2，清除旧模式；不影响其他外设。
-     *    CCIPR.USART2SEL = 10，表示选择 HSI16。
+    /* 3. 只复位 USART1，清除旧模式；不影响其他外设。
+     *    CCIPR.USART1SEL = 10，表示选择 HSI16。
      */
-    RCC->APB1RSTR1 |= RCC_APB1RSTR1_USART2RST;
-    RCC->APB1RSTR1 &= ~RCC_APB1RSTR1_USART2RST;
-    RCC->CCIPR = (RCC->CCIPR & ~RCC_CCIPR_USART2SEL) |
-                 RCC_CCIPR_USART2SEL_1;
+    RCC->APB2RSTR |= RCC_APB2RSTR_USART1RST;
+    RCC->APB2RSTR &= ~RCC_APB2RSTR_USART1RST;
+    RCC->CCIPR = (RCC->CCIPR & ~RCC_CCIPR_USART1SEL) |
+                 RCC_CCIPR_USART1SEL_1;
 
     /* 4. GPIO 层负责端口开钟、模式、电气配置和 AF；UART 层选择引脚。 */
     if ((BSP_GPIO_Clock_Enable(BSP_UART_TX_PORT) == 0U) ||
@@ -129,7 +129,7 @@ uint8_t BSP_UART_Init(uint32_t BaudRate)
         return 0U;
     }
 
-    /* 5. USART2 已由本驱动复位并独占，因此可以写入完整的已知配置。
+    /* 5. USART1 已由本驱动复位并独占，因此可以写入完整的已知配置。
      *    CR1：M1/M0=00 为 8 位，PCE=0 无校验，OVER8=0 为 16 倍，FIFOEN=0。
      *    CR2：STOP=00 为 1 个停止位，CLKEN=0 为异步通信。
      *    CR3：关闭 RTS/CTS、半双工、DMA 和错误中断，采用轮询。
